@@ -2,14 +2,27 @@ import axios from "axios";
 import "../App.css";
 import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import _ from "lodash";
 import { FaEdit, FaTrashAlt } from "react-icons/fa";
+import { Table, Pagination } from "semantic-ui-react";
+import "semantic-ui-css/semantic.min.css";
 
-const pageSize = 5;
+const itemsPerPage = 5;
 const Posts = () => {
-  const [posts, setPosts] = useState([]);
-  const [paginatedPosts, setPaginatedPosts] = useState();
+  const [data, setData] = useState([]);
+
+  // state to store the current page number
   const [currentPage, setCurrentPage] = useState(1);
+
+  // function to handle pagination changes:
+  const handlePaginationChange = (e, { activePage }) =>
+    setCurrentPage(activePage);
+
+  // function to return the data for the current page:
+  const getDataForCurrentPage = () => {
+    const startIndex = (currentPage - 1) * itemsPerPage;
+    const endIndex = startIndex + itemsPerPage;
+    return data.slice(startIndex, endIndex);
+  };
 
   // Post Data in "/"
   useEffect(() => {
@@ -17,8 +30,7 @@ const Posts = () => {
       .get("http://localhost:7000/")
       .then((res) => {
         console.log(res.data);
-        setPosts(res.data);
-        setPaginatedPosts(_(res.data).slice(0).take(pageSize).value());
+        setData(res.data);
       })
       .catch((err) => {
         console.log(err);
@@ -26,7 +38,6 @@ const Posts = () => {
   }, []);
 
   // Delete Data By Id
-
   const onDelete = async (id) => {
     const confirm = window.confirm(
       "Are you sure you want to delete this data?"
@@ -42,23 +53,11 @@ const Posts = () => {
           console.log(err);
         });
     }
-  };
-
-
-  // Pagination
-  const pageCount = posts ? Math.ceil(posts.length / pageSize) : 0;
-  if (pageCount === 1) return null;
-  const pages = _.range(1, pageCount + 1);
-
-  const pagination = (pageNo) => {
-    setCurrentPage(pageNo);
-    const startIndex = (pageNo - 1) * pageSize;
-    const paginatedPost = _(posts).slice(startIndex).take(pageSize).value();
-    setPaginatedPosts(paginatedPost);
+    window.location.href = "/";
   };
 
   return (
-    <div>
+    <div className="d-flex flex-column justify-content-center m-5">
       <div className="m-5 d-flex justify-content-end">
         <Link to="/add">
           <button type="button" className="btn btn-primary p-2 ">
@@ -66,75 +65,60 @@ const Posts = () => {
           </button>
         </Link>
       </div>
-      {!paginatedPosts ? (
-        "No Data"
-      ) : (
-        <table className="table caption-top table table-striped table-hover container center_div mt-5 border">
+      <div>
+        <Table className="table caption-top table-striped table-hover border ">
           <caption>
             <h3>List of Notes</h3>
           </caption>
-
-          <thead className="tr">
-            <tr className="">
-              <th className="p-3">ID</th>
-              <th className="p-3">Project Name</th>
-              <th className="p-3">Version</th>
-              <th className="p-3">Build Number</th>
-              <th className="p-3">Description</th>
-              <th className="p-3">Created Date</th>
-              <th className="p-3">Edit</th>
-              <th className="p-3">Delete</th>
-            </tr>
-          </thead>
-
-          {paginatedPosts.map((data) => {
-            const del = () => {
-              onDelete(data.id);
-              window.location.href = "/";
-            };
-            return (
-              <tbody key={data.id}>
-                <tr>
-                  <td>{data.id}</td>
-                  <td>{data.project_name}</td>
-                  <td>{data.version}</td>
-                  <td>{data.build_no}</td>
-                  <td>{data.release_note}</td>
-                  <td>{data.date}</td>
-                  <td>
-                    <Link to={"update/" + data.id}>
-                      <button type="button" className="btn btn-info">
-                        <FaEdit />
-                      </button>
-                    </Link>
-                  </td>
-
-                  <td>
-                    <button type="button" className="bi-trash" onClick={del}>
-                      <FaTrashAlt />
+          <Table.Header className="tr">
+            <Table.Row className="">
+              <Table.HeaderCell className="p-3">ID</Table.HeaderCell>
+              <Table.HeaderCell className="p-3">Project Name</Table.HeaderCell>
+              <Table.HeaderCell className="p-3">Version</Table.HeaderCell>
+              <Table.HeaderCell className="p-3">Build Number</Table.HeaderCell>
+              <Table.HeaderCell className="p-3">Description</Table.HeaderCell>
+              <Table.HeaderCell className="p-3">Created Date</Table.HeaderCell>
+              <Table.HeaderCell className="p-3">Edit</Table.HeaderCell>
+              <Table.HeaderCell className="p-3">Delete</Table.HeaderCell>
+            </Table.Row>
+          </Table.Header>
+          <Table.Body>
+            {getDataForCurrentPage().map((item) => (
+              <Table.Row key={item.id}>
+                <Table.Cell>{item.id}</Table.Cell>
+                <Table.Cell>{item.project_name}</Table.Cell>
+                <Table.Cell>{item.version}</Table.Cell>
+                <Table.Cell>{item.build_no}</Table.Cell>
+                <Table.Cell>{item.release_note}</Table.Cell>
+                <Table.Cell>{item.date}</Table.Cell>
+                <Table.Cell>
+                  <Link to={"update/" + item.id}>
+                    <button type="button" className="btn btn-info">
+                      <FaEdit />
                     </button>
-                  </td>
-                </tr>
-              </tbody>
-            );
-          })}
-        </table>
-      )}
-      <nav className="d-flex justify-content-end m-5 ">
-        <ul className="pagination ">
-          {pages.map((page, index) => (
-            <li
-              key={index}
-              className={
-                page === currentPage ? "page-item active" : "page-item"
-              }
-            >
-              <p className="page-link" onClick={() => pagination(page)}>
-                {page}
-              </p>
-            </li>
-          ))}
-        </ul>
+                  </Link>
+                </Table.Cell>
+
+                <Table.Cell>
+                  <button
+                    type="button"
+                    className="bi-trash"
+                    onClick={() => onDelete(item.id)}
+                  >
+                    <FaTrashAlt />
+                  </button>
+                </Table.Cell>
+              </Table.Row>
+            ))}
+          </Table.Body>
+        </Table>
+      </div>
+      <nav className="d-flex justify-content-end m-5">
+        <Pagination
+          defaultActivePage={currentPage}
+          totalPages={Math.ceil(data.length / itemsPerPage)}
+          onPageChange={handlePaginationChange}
+        />
       </nav>
     </div>
   );

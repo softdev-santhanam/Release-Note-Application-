@@ -16,9 +16,9 @@ const AddData = () => {
   console.log(createdDate);
 
   const schema = yup.object().shape({
-    project_name: yup.string().required(),
-    version: yup.string().required(),
-    build_no: yup.string().required(),
+    project_name: yup.string().matches(/^[a-zA-Z ]+$/, "Project name can only contain alphabets and spaces").required(),
+    version: yup.string().matches(/^[0-9]+.[0-9]+$/, "Invalid version format").required(),
+    build_no: yup.string().matches(/^[0-9]+$/, "Build number must be a number").required(),
     release_note: yup.string().required(),
     date: yup.string().required(),
   });
@@ -139,16 +139,18 @@ const AddData = () => {
                 />
               </div>
 
-              <div className="mb-3">
+              <div className="d-flex">
+              <div className="mb-3 m-2">
                 <Button type="submit" className="btn btn-primary">
                   Add
                 </Button>
               </div>
 
-              <div className="mb-3">
+              <div className="mb-3 m-2">
                 <Link to="/">
                   <Button className="btn btn-primary">Go Back</Button>
                 </Link>
+              </div>
               </div>
             </div>
           </Form>
