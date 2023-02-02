@@ -20,4 +20,6 @@ const corsOptions ={
 }
 app.use(cors(corsOptions));
 
-npm i react-bootstrap bootstrap yup formik
+
+<!-- Dependencies used in the Project -->
+npm install axios bootstrap formik react-bootstrap react-icons react-router-dom semantic-ui-css semantic-ui-react yup

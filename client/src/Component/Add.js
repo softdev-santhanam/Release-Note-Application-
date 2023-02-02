@@ -16,9 +16,9 @@ const AddData = () => {
   console.log(createdDate);
 
   const schema = yup.object().shape({
-    project_name: yup.string().matches(/^[a-zA-Z ]+$/, "Project name can only contain alphabets and spaces").required(),
+    project_name: yup.string().matches(/^[a-zA-Z0-9\s]+$/, "Project name is invalid. Please insert only letters and numbers." ).required(),
     version: yup.string().matches(/^[0-9]+.[0-9]+$/, "Invalid version format").required(),
-    build_no: yup.string().matches(/^[0-9]+$/, "Build number must be a number").required(),
+    build_no: yup.string().matches(/^[0-9]+.[0-9]+$/, "Build number must be a number").required(),
     release_note: yup.string().required(),
     date: yup.string().required(),
   });

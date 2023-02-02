@@ -2,24 +2,19 @@ const express = require("express");
 const app = express();
 const bodyParser = require("body-parser");
 const { Sequelize } = require("sequelize");
-
+const port = 7000;
 const cors = require("cors");
-// app.use(cors());
 
 const corsOptions = {
   origin: "http://localhost:3000",
   credentials: true, //access-control-allow-credentials:true
   optionSuccessStatus: 200,
 };
-app.use(cors(corsOptions));
 
-const port = 7000;
+app.use(cors(corsOptions));
 
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: false }));
-
-// app.use(express.urlencoded({ extended: true }));
-// app.use(express.json());
 
 // Using Sequelize to manage the database
 const sequelize = new Sequelize("crud", "santhanakrishnan", "Askrrdc@#$sql1", {
@@ -39,23 +34,6 @@ const crud_table = sequelize.define(
   { tableName: "crud_table" }
 );
 
-// Used to delete data  when refresh
-crud_table.sync({ force: false });
-
-// Check the connection is successful or not
-sequelize
-  .authenticate()
-  .then(() => {
-    console.log("Connection made successful");
-  })
-  .catch(() => {
-    {
-      console.log(err, "This is error");
-    }
-  });
-
-// Build method is used to create a data and save method is used to save the data in the table
-
 // Post Data
 app.post("/", async (req, res) => {
   const project_name = req.body.project_name;
@@ -71,15 +49,45 @@ app.post("/", async (req, res) => {
     date,
   });
   await post_data.save();
-  //   res.send("Data posted ");
   res.redirect("/");
 });
 
-// Get All data
+// Get All Data
 app.get("/", async (req, res) => {
-  const data = await crud_table.findAll();
-  res.send(data);
+  const limit = parseInt(req.query.limit) || null;
+  const currentPage = parseInt(req.query.page) || 1;
+  const offset = Number((currentPage - 1) * limit);
+  const { project_name, id, build_no, searchTerm } = req.query;
+
+  let where = {};
+  if (searchTerm) {
+    where[Sequelize.Op.or] = [
+      { project_name: { [Sequelize.Op.like]: `%${searchTerm}%` } },
+      { id: { [Sequelize.Op.like]: `%${searchTerm}%` } },
+      { build_no: { [Sequelize.Op.like]: `%${searchTerm}%` } },
+    ];
+  }
+  if (project_name) {
+    where.project_name = project_name
+  }
+  if (id) {
+    where.id = id;
+  }
+  if (build_no) {
+    where.build_no = build_no;
+  }
+
+  const { count, rows } = await crud_table.findAndCountAll({
+    where,
+    limit,
+    offset,
+  });
+
+  const totalPages = Math.ceil(count / limit);
+
+  res.send({ data: rows, totalPages, count });
 });
+
 
 // Get Unique data by ID
 app.get("/:id", async (req, res) => {
@@ -102,10 +110,9 @@ app.put("/:id", async (req, res) => {
     const update_data = await crud_table.update(data, {
       where: { id },
     });
-    // res.send("Data Updated");
     res.redirect("/");
   } catch (err) {
-    res.send(err);
+    res.send;
   }
 });
 
@@ -116,14 +123,12 @@ app.delete("/:id", async (req, res) => {
     const delete_data = await crud_table.destroy({
       where: { id },
     });
-    // res.send("Data Deleted");
     res.redirect("/");
   } catch (err) {
     res.send(err);
   }
 });
 
-// Listening at the port
 app.listen(port, () => {
   console.log(`Server connected at the port ${port}`);
 });
