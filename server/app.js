@@ -5,9 +5,10 @@ const { Sequelize } = require("sequelize");
 const port = 7000;
 const cors = require("cors");
 
+//access-control-allow-credentials:true
 const corsOptions = {
   origin: "http://localhost:3000",
-  credentials: true, //access-control-allow-credentials:true
+  credentials: true, 
   optionSuccessStatus: 200,
 };
 
@@ -30,6 +31,7 @@ const crud_table = sequelize.define(
     build_no: Sequelize.DECIMAL,
     release_note: Sequelize.TEXT,
     date: Sequelize.STRING,
+    isDelete: Sequelize.STRING,
   },
   { tableName: "crud_table" }
 );
@@ -41,12 +43,14 @@ app.post("/", async (req, res) => {
   const build_no = req.body.build_no;
   const release_note = req.body.release_note;
   const date = req.body.date;
+  const isDelete = req.body.isDelete;
   const post_data = crud_table.build({
     project_name,
     version,
     build_no,
     release_note,
     date,
+    isDelete,
   });
   await post_data.save();
   res.redirect("/");
@@ -59,7 +63,7 @@ app.get("/", async (req, res) => {
   const offset = Number((currentPage - 1) * limit);
   const { project_name, id, build_no, searchTerm } = req.query;
 
-  let where = {};
+  let where = { isDelete: "0" }; // exclude the data with isDelete set to 1
   if (searchTerm) {
     where[Sequelize.Op.or] = [
       { project_name: { [Sequelize.Op.like]: `%${searchTerm}%` } },
@@ -68,7 +72,7 @@ app.get("/", async (req, res) => {
     ];
   }
   if (project_name) {
-    where.project_name = project_name
+    where.project_name = project_name;
   }
   if (id) {
     where.id = id;
@@ -87,7 +91,6 @@ app.get("/", async (req, res) => {
 
   res.send({ data: rows, totalPages, count });
 });
-
 
 // Get Unique data by ID
 app.get("/:id", async (req, res) => {
@@ -120,12 +123,13 @@ app.put("/:id", async (req, res) => {
 app.delete("/:id", async (req, res) => {
   const id = req.params.id;
   try {
-    const delete_data = await crud_table.destroy({
-      where: { id },
-    });
-    res.redirect("/");
+    const delete_data = await crud_table.update(
+      { isDelete: "1" },
+      { where: { id } }
+    );
+    res.send({ status: "success", message: "Data deleted successfully" });
   } catch (err) {
-    res.send(err);
+    res.send({ status: "error", message: "Error while deleting data" });
   }
 });
 

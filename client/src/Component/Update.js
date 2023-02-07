@@ -1,23 +1,45 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
-import { Link, useNavigate, useParams } from "react-router-dom";
+import { useParams, useNavigate, useLocation } from "react-router-dom";
+import Button from "react-bootstrap/Button";
+import Modal from "react-bootstrap/Modal";
 
 const EditEmployee = () => {
-  const { id } = useParams(); //The useParams() hook helps us to access the URL parameters from a current route.
+  // Handle Search Limit in Update Page
+  const navigate = useNavigate();
+  const PageData = useLocation().state;
+  const searchTerm = PageData.search;
+  const limit = PageData.lim;
+
+  const handleGoBack = () => {
+    navigate("/", { state: { search: searchTerm, lim: limit } });
+  };
+
+  //The useParams() hook helps us to access the URL parameters from a current route.
+  const { id } = useParams();
+
+  // State Management to get all the data
   const [data, setData] = useState({
-    userId: null,
-    project_name: null,
+    userId: "",
+    project_name: "",
     version: "",
     build_no: "",
-    release_note: null,
+    release_note: "",
   });
 
+  // State Management for error validation
   const [errors, setErrors] = useState({
     project_name: "",
     version: "",
     build_no: "",
     release_note: "",
   });
+  const [originalData, setOriginalData] = useState({});
+
+  // State Management to handel the Model
+  const [show, setShow] = useState(false);
+  const handleClose = () => setShow(false);
+  const handleShow = () => setShow(true);
 
   const { project_name, version, build_no, release_note } = data;
 
@@ -26,13 +48,7 @@ const EditEmployee = () => {
     setErrors((prev) => ({ ...prev, [e.target.name]: e.target.value }));
   };
 
-  useEffect(() => {
-    loadUser();
-    // eslint-disable-next-line
-  }, []);
-
-  const navigate = useNavigate();
-
+  // Update Form Validation using Regular Expression
   const validate = () => {
     let isValid = true;
     const projectNameRegex = /^[a-zA-Z0-9\s]+$/;
@@ -41,17 +57,29 @@ const EditEmployee = () => {
     const releaseNoteRegex = /^[a-zA-Z0-9\s]+$/;
 
     if (!projectNameRegex.test(project_name)) {
-      setErrors((prev) => ({ ...prev, project_name: "Project name is invalid. Please insert only letters and numbers." }));
+      setErrors((prev) => ({
+        ...prev,
+        project_name:
+          "Project name is invalid. Please insert only letters and numbers.",
+      }));
       isValid = false;
     }
 
     if (!versionRegex.test(version)) {
-      setErrors((prev) => ({ ...prev, version: "Version number not valid Please enter only decimal and digit numbers." }));
+      setErrors((prev) => ({
+        ...prev,
+        version:
+          "Version number not valid Please enter only decimal and digit numbers.",
+      }));
       isValid = false;
     }
 
     if (!buildNumberRegex.test(build_no)) {
-      setErrors((prev) => ({ ...prev, build_no: "Build number not valid Please enter only decimal and digit numbers." }));
+      setErrors((prev) => ({
+        ...prev,
+        build_no:
+          "Build number not valid Please enter only decimal and digit numbers.",
+      }));
       isValid = false;
     }
 
@@ -66,28 +94,41 @@ const EditEmployee = () => {
     return isValid;
   };
 
+  // Update request to specific data by id
   const updateNotes = (e) => {
     e.preventDefault();
     if (validate()) {
       try {
         axios.put(`http://localhost:7000/${id}`, data);
-        console.log(data);
-        alert("Form Updated Successfully!");
-        navigate("/");
+        // console.log(data);
+        handleShow();
       } catch (err) {
         console.log(err);
       }
     }
   };
 
+  useEffect(() => {
+    loadUser();
+    // eslint-disable-next-line
+  }, []);
+
+  // Load the existing user data in form to update
   const loadUser = () => {
     fetch(`http://localhost:7000/${id}`, {
       method: "GET",
     })
       .then((response) => response.json())
       .then((result) => {
-        console.log(result);
+        // console.log(result);
         setData({
+          userId: result.id,
+          project_name: result.project_name,
+          version: result.version,
+          build_no: result.build_no,
+          release_note: result.release_note,
+        });
+        setOriginalData({
           userId: result.id,
           project_name: result.project_name,
           version: result.version,
@@ -96,6 +137,19 @@ const EditEmployee = () => {
         });
       })
       .catch((error) => console.log("error", error));
+  };
+
+  // Check for the update and block the update by disabled the update button
+  const updateButtonDisabled = () => {
+    if (
+      originalData.project_name === project_name &&
+      originalData.version === version &&
+      originalData.build_no === build_no &&
+      originalData.release_note === release_note
+    ) {
+      return true;
+    }
+    return false;
   };
 
   return (
@@ -166,15 +220,32 @@ const EditEmployee = () => {
 
       <div className="d-flex">
         <div className="mb-3 m-2">
-          <button className="btn btn-primary" onClick={updateNotes}>
+          <Button
+            variant="primary"
+            type="submit"
+            onClick={updateNotes}
+            disabled={updateButtonDisabled()}
+          >
             Update
-          </button>
+          </Button>
+
+          <Modal show={show} onHide={handleClose}>
+            <Modal.Header closeButton>
+              <Modal.Title>Success</Modal.Title>
+            </Modal.Header>
+            <Modal.Body>Record updated successfully!</Modal.Body>
+            <Modal.Footer>
+              <Button variant="primary" onClick={handleClose}>
+                OK
+              </Button>
+            </Modal.Footer>
+          </Modal>
         </div>
 
         <div className="mb-3 m-2">
-          <Link to="/">
-            <button className="btn btn-primary">Go Back</button>
-          </Link>
+          <button className="btn btn-primary" onClick={handleGoBack}>
+            Go Back
+          </button>
         </div>
       </div>
     </div>

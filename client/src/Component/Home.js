@@ -1,18 +1,84 @@
 import React, { useState, useMemo, useEffect } from "react";
 import axios from "axios";
-import { Link } from "react-router-dom";
-import { Table, Pagination } from "semantic-ui-react";
+import { useNavigate, useLocation } from "react-router-dom";
+import { Pagination } from "semantic-ui-react";
 import "semantic-ui-css/semantic.min.css";
-import { FaEdit, FaTrashAlt } from "react-icons/fa";
+import { FaEdit, FaTrashAlt, FaRegPlusSquare } from "react-icons/fa";
 import debounce from "lodash.debounce";
+import Button from "react-bootstrap/Button";
+import Modal from "react-bootstrap/Modal";
 
 function App() {
-  const [data, setData] = useState([]);
-  const [totalPages, setTotalPages] = useState(0);
-  const [limit, setLimit] = useState(10);
-  const [page, setPage] = useState(1);
-  const [searchTerm, setSearchTerm] = useState("");
+  /* Add the useNavigate and useLocation Hook to transfer and retrieve 
+  search and limit state form Add & Update Page */
+  const navigate = useNavigate();
+  const location = useLocation();
 
+  // State Management to get all the data
+  const [data, setData] = useState([]);
+
+  // State Management for Pagination
+  const [totalPages, setTotalPages] = useState(0);
+  const [page, setPage] = useState(1);
+
+  // Add a state to keep track of the search term and limit
+  const [searchTerm, setSearchTerm] = useState("");
+  const [limit, setLimit] = useState(5);
+  /* console.log(searchTerm);
+  console.log(limit); */
+
+  // State Management for ID
+  const [id, setId] = useState(null);
+
+  // State Management to After delete the correct data
+  const [idToDelete, setIdToDelete] = useState(null);
+
+  const GoToUpdate = (id) => {
+    navigate("update/" + id, { state: { search: searchTerm, lim: limit } });
+  };
+
+  const GoToAdd = () => {
+    navigate("add/", { state: { search: searchTerm, lim: limit } });
+  };
+
+  useEffect(() => {
+    if (location.state) {
+      setSearchTerm(location.state.search);
+      setLimit(location.state.lim);
+    }
+  }, [location.state]);
+
+  // State Management to handel the Model
+  const [show, setShow] = useState(false);
+  const handleClose = () => setShow(false);
+  const handleShow = () => setShow(true);
+
+  const handlePageChange = (newPage) => {
+    // console.log(`New Page: ${newPage}`);
+    setPage(newPage);
+  };
+
+  const handleLimitChange = (event) => {
+    const convertLimit = parseInt(event.target.value);
+    setLimit(convertLimit);
+  };
+
+  const handleSearchChange = (e) => {
+    setSearchTerm(e.target.value);
+  };
+
+  // Debounce to limit the rate of execution of search input action
+  const debouncedResults = useMemo(() => {
+    return debounce(handleSearchChange, 300);
+  }, []);
+
+  useEffect(() => {
+    return () => {
+      debouncedResults.cancel();
+    };
+  });
+
+  // useEffect hook to fetch the data from database and set it to states
   useEffect(() => {
     const fetchData = async () => {
       const result = await axios.get(
@@ -24,51 +90,34 @@ function App() {
     fetchData();
   }, [page, limit, searchTerm]);
 
-  const handlePageChange = (newPage) => {
-    console.log(`New Page: ${newPage}`);
-    setPage(newPage);
-  };
-
-  const handleLimitChange = (event) => {
-    setLimit(event.target.value);
-  };
-
-  const handleSearchChange = (e) => {
-    setSearchTerm(e.target.value);
-  };
-
-  // Debounce
-  const debouncedResults = useMemo(() => {
-    return debounce(handleSearchChange, 300);
-  }, []);
-  const debouncedResultsLimit = useMemo(() => {
-    return debounce(handleLimitChange, 300);
-  }, []);
-
+  // State Management after deletion request to refresh the data in Home Page
   useEffect(() => {
-    return () => {
-      debouncedResults.cancel();
-      debouncedResultsLimit.cancel();
-    };
-  });
-
-  // Delete Request
-  const onDelete = async (id) => {
-    const confirm = window.confirm(
-      "Are you sure you want to delete this data?"
-    );
-    if (confirm) {
-      alert("Data deleted successfully!");
-      await axios
-        .delete(`http://localhost:7000/${id}`)
-        .then(() => {
-          console.log("Data deleted successfully.");
-        })
-        .catch((err) => {
-          console.log(err);
-        });
+    if (idToDelete) {
+      const fetchData = async () => {
+        const result = await axios.get(
+          `http://localhost:7000/?page=${page}&limit=${limit}&searchTerm=${searchTerm}`
+        );
+        setData(result.data.data);
+        setTotalPages(result.data.totalPages);
+      };
+      fetchData();
+      setIdToDelete(null);
     }
-    window.location.href = "/";
+  }, [idToDelete, page, limit, searchTerm]);
+
+  // Delete Request to delete the Data By Id
+  const onDelete = async () => {
+    await axios
+      .delete(`http://localhost:7000/${id}`)
+      .then(() => {
+        // console.log(`Deleted Id ${id}`);
+        setIdToDelete(id);
+        setData(data.filter((item) => item.id !== idToDelete));
+      })
+      .catch((err) => {
+        console.log(err);
+      });
+    handleClose();
   };
 
   return (
@@ -78,100 +127,126 @@ function App() {
           className="me-5 rounded-2 p-2"
           type="text"
           placeholder="Search..."
+          defaultValue={searchTerm}
           onChange={debouncedResults}
         />
-        <input
-          type="number"
+        <select
           className="me-5 rounded-2 p-2"
-          placeholder="Limit"
-          onChange={debouncedResultsLimit}
-        ></input>
-        <Link to="/add">
-          <button type="button" className="btn btn-primary p-2 rounded-2">
-            Create New Notes
-          </button>
-        </Link>
+          onChange={handleLimitChange}
+          value={limit}
+        >
+          <option value={5}>5</option>
+          <option value={10}>10</option>
+          <option value={25}>25</option>
+          <option value={50}>50</option>
+          <option value={100}>100</option>
+        </select>
+
+        <button
+          type="button"
+          className="btn btn-info rounded-2 "
+          onClick={() => {
+            GoToAdd();
+          }}
+        >
+          <FaRegPlusSquare />
+        </button>
       </div>
 
       <div>
-        <Table className="table caption-top table-striped table-hover border ">
-          <caption>
-            <h3>List of Notes</h3>
-          </caption>
-          <Table.Header className="tr">
-            <Table.Row className="">
-              <Table.HeaderCell className="py-4 text-left">ID</Table.HeaderCell>
-              <Table.HeaderCell className="py-4 text-left">
-                Project Name
-              </Table.HeaderCell>
-              <Table.HeaderCell className="py-4 text-left">
-                Version
-              </Table.HeaderCell>
-              <Table.HeaderCell className="py-4 text-left">
-                Build Number
-              </Table.HeaderCell>
-              <Table.HeaderCell className="py-4 text-left">
-                Description
-              </Table.HeaderCell>
-              <Table.HeaderCell className="py-4 text-left">
-                Created Date
-              </Table.HeaderCell>
-              <Table.HeaderCell className="py-4 text-left">
-                Edit
-              </Table.HeaderCell>
-              <Table.HeaderCell className="py-4 text-left">
-                Delete
-              </Table.HeaderCell>
-            </Table.Row>
-          </Table.Header>
-          <Table.Body>
-            {data.map((item) => (
-              <Table.Row key={item.id}>
-                <Table.Cell className="text-left">{item.id}</Table.Cell>
-                <Table.Cell className="text-left">
-                  {item.project_name}
-                </Table.Cell>
-                <Table.Cell className="text-left">{item.version}</Table.Cell>
-                <Table.Cell className="text-left">{item.build_no}</Table.Cell>
-                <Table.Cell className="text-left">
-                  {item.release_note}
-                </Table.Cell>
-                <Table.Cell className="text-left">{item.date}</Table.Cell>
-                <Table.Cell className="text-left">
-                  <Link to={"update/" + item.id}>
+        {data.length === 0 ? (
+          <h1 className="text-center p-5">No Result Found!</h1>
+        ) : (
+          <table className="table caption-top table-striped table-hover border ">
+            <caption>
+              <h3>List of Notes</h3>
+            </caption>
+            <thead className="tr">
+              <tr className="">
+                <th className="py-4 text-left align-middle">ID</th>
+                <th className="py-4 text-left align-middle">Project Name</th>
+                <th className="py-4 text-left align-middle">Version</th>
+                <th className="py-4 text-left align-middle">Build Number</th>
+                <th className="py-4 text-left align-middle">Description</th>
+                <th className="py-4 text-left align-middle">Created Date</th>
+                <th className="py-4 text-left align-middle">Edit</th>
+                <th className="py-4 text-left align-middle">Delete</th>
+              </tr>
+            </thead>
+            <tbody>
+              {data.map((item) => (
+                <tr key={item.id}>
+                  <td className="text-left align-middle">{item.id}</td>
+                  <td className="text-left align-middle">
+                    {item.project_name}
+                  </td>
+                  <td className="text-left align-middle">{item.version}</td>
+                  <td className="text-left align-middle">{item.build_no}</td>
+                  <td className="text-left align-middle">
+                    {item.release_note}
+                  </td>
+                  <td className="text-left align-middle">{item.date}</td>
+                  <td className="text-left align-middle">
+                    {/* Update Button */}
                     <button
                       type="button"
                       className="btn btn-info btn-sm"
-                      width="10px"
-                      height="10px"
+                      onClick={() => {
+                        setId(item.id);
+                        GoToUpdate(item.id);
+                      }}
                     >
                       <FaEdit />
                     </button>
-                  </Link>
-                </Table.Cell>
+                  </td>
 
-                <Table.Cell className="text-center">
-                  <button
-                    width="10px"
-                    height="10px"
-                    type="button"
-                    className="btn btn-info btn-sm"
-                    onClick={() => onDelete(item.id)}
-                  >
-                    <FaTrashAlt />
-                  </button>
-                </Table.Cell>
-              </Table.Row>
-            ))}
-          </Table.Body>
-        </Table>
+                  <td className="text-center">
+                    <div>
+                      {/* Delete Button */}
+                      <button
+                        type="button"
+                        className="btn btn-info btn-sm"
+                        onClick={() => {
+                          setId(item.id);
+                          handleShow();
+                        }}
+                      >
+                        <FaTrashAlt />
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        )}
       </div>
       <div className="d-flex justify-content-end mt-5">
-        <Pagination
-          defaultActivePage={page}
-          totalPages={totalPages}
-          onPageChange={(event, { activePage }) => handlePageChange(activePage)}
-        />
+        {data.length > 0 ? (
+          <Pagination
+            defaultActivePage={page}
+            totalPages={totalPages}
+            onPageChange={(e, { activePage }) => handlePageChange(activePage)}
+          />
+        ) : null}
+
+        {/* Delete Modal */}
+        <Modal show={show} onHide={handleClose}>
+          <Modal.Header closeButton>
+            <Modal.Title>Confirm Delete</Modal.Title>
+          </Modal.Header>
+          <Modal.Body>Are you sure you want to delete this data?</Modal.Body>
+          <Modal.Footer>
+            <Button variant="secondary" onClick={handleClose}>
+              Close
+            </Button>
+
+            {/* Modal Delete Button */}
+            <Button variant="info" onClick={() => onDelete()}>
+              Delete
+            </Button>
+          </Modal.Footer>
+        </Modal>
       </div>
     </div>
   );
