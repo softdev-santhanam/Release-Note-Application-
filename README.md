@@ -1,2 +1,3 @@
 # CRUD-Using-MySQL-Sequelize
-Comolete Front-end and Back-end
+
+Complete Front-end and Back-end CRUD Application with Search, Limit and Pagination
