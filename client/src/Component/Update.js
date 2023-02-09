@@ -10,9 +10,10 @@ const EditEmployee = () => {
   const PageData = useLocation().state;
   const searchTerm = PageData.search;
   const limit = PageData.lim;
+  const page = PageData.pg;
 
   const handleGoBack = () => {
-    navigate("/", { state: { search: searchTerm, lim: limit } });
+    navigate("/", { state: { search: searchTerm, lim: limit, pg: page } });
   };
 
   //The useParams() hook helps us to access the URL parameters from a current route.
@@ -38,14 +39,21 @@ const EditEmployee = () => {
 
   // State Management to handel the Model
   const [show, setShow] = useState(false);
-  const handleClose = () => setShow(false);
+
   const handleShow = () => setShow(true);
+
+  const handleClose = () => {
+    navigate("/", { state: { search: searchTerm, lim: limit, pg: page } });
+  };
+
+  const handelNavigate = () => {
+    navigate("/", { state: { search: searchTerm, lim: limit, pg: page } });
+  };
 
   const { project_name, version, build_no, release_note } = data;
 
   const handleChange = (e) => {
     setData((prev) => ({ ...prev, [e.target.name]: e.target.value }));
-    setErrors((prev) => ({ ...prev, [e.target.name]: e.target.value }));
   };
 
   // Update Form Validation using Regular Expression
@@ -86,7 +94,7 @@ const EditEmployee = () => {
     if (!releaseNoteRegex.test(release_note)) {
       setErrors((prev) => ({
         ...prev,
-        release_note: "Release note is required",
+        release_note: "Release Note is invalid. Please insert only letters and numbers",
       }));
       isValid = false;
     }
@@ -152,12 +160,23 @@ const EditEmployee = () => {
     return false;
   };
 
+  useEffect(() => {
+    if (errors) {
+      setTimeout(() => {
+        setErrors("");
+      }, 3000);
+    }
+  }, [errors]);
+
   return (
     <div className="form-group d-flex flex-column container center_div mt-5">
       <div className="mt-5">
-        <h1>Add New Notes</h1>
+        <h1>Update Notes</h1>
       </div>
       <div className="mb-3 mt-3">
+        <label className="py-2">
+          <h4>Project Name</h4>
+        </label>
         <input
           className="form-control"
           type="text"
@@ -173,6 +192,9 @@ const EditEmployee = () => {
       </div>
 
       <div className="mb-3">
+        <label className="py-2">
+          <h4>Version</h4>
+        </label>
         <input
           className="form-control"
           type="number"
@@ -188,6 +210,9 @@ const EditEmployee = () => {
       </div>
 
       <div className="mb-3">
+        <label className="py-2">
+          <h4>Build Number</h4>
+        </label>
         <input
           className="form-control"
           type="number"
@@ -203,6 +228,9 @@ const EditEmployee = () => {
       </div>
 
       <div className="mb-3">
+        <label className="py-2">
+          <h4>Release Note</h4>
+        </label>
         <textarea
           className="form-control"
           rows={5}
@@ -235,7 +263,7 @@ const EditEmployee = () => {
             </Modal.Header>
             <Modal.Body>Record updated successfully!</Modal.Body>
             <Modal.Footer>
-              <Button variant="primary" onClick={handleClose}>
+              <Button variant="primary" onClick={handelNavigate}>
                 OK
               </Button>
             </Modal.Footer>

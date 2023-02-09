@@ -16,14 +16,15 @@ function App() {
 
   // State Management to get all the data
   const [data, setData] = useState([]);
+  console.log(data);
 
   // State Management for Pagination
   const [totalPages, setTotalPages] = useState(0);
   const [page, setPage] = useState(1);
-
+  const [initialValue] = useState(1);
   // Add a state to keep track of the search term and limit
   const [searchTerm, setSearchTerm] = useState("");
-  const [limit, setLimit] = useState(5);
+  const [limit, setLimit] = useState(10);
   /* console.log(searchTerm);
   console.log(limit); */
 
@@ -33,18 +34,25 @@ function App() {
   // State Management to After delete the correct data
   const [idToDelete, setIdToDelete] = useState(null);
 
+  // If the total records less then or equal to limits, the pagination should not be display
+  const [count, setCount] = useState("");
+  console.log(count);
+
   const GoToUpdate = (id) => {
-    navigate("update/" + id, { state: { search: searchTerm, lim: limit } });
+    navigate("update/" + id, {
+      state: { search: searchTerm, lim: limit, pg: page },
+    });
   };
 
   const GoToAdd = () => {
-    navigate("add/", { state: { search: searchTerm, lim: limit } });
+    navigate("add/", { state: { search: searchTerm, lim: limit, pg: page } });
   };
 
   useEffect(() => {
     if (location.state) {
       setSearchTerm(location.state.search);
       setLimit(location.state.lim);
+      setPage(initialValue);
     }
   }, [location.state]);
 
@@ -80,30 +88,26 @@ function App() {
 
   // useEffect hook to fetch the data from database and set it to states
   useEffect(() => {
-    const fetchData = async () => {
-      const result = await axios.get(
-        `http://localhost:7000/?page=${page}&limit=${limit}&searchTerm=${searchTerm}`
-      );
-      setData(result.data.data);
-      setTotalPages(result.data.totalPages);
-    };
-    fetchData();
-  }, [page, limit, searchTerm]);
+    fetchData(page, limit, searchTerm);
+  }, [page, limit]);
 
-  // State Management after deletion request to refresh the data in Home Page
   useEffect(() => {
-    if (idToDelete) {
-      const fetchData = async () => {
-        const result = await axios.get(
-          `http://localhost:7000/?page=${page}&limit=${limit}&searchTerm=${searchTerm}`
-        );
-        setData(result.data.data);
-        setTotalPages(result.data.totalPages);
-      };
-      fetchData();
-      setIdToDelete(null);
-    }
-  }, [idToDelete, page, limit, searchTerm]);
+    fetchData(initialValue, limit, searchTerm);
+  }, [searchTerm]);
+
+  useEffect(() => {
+    fetchData(page, limit, searchTerm);
+    setIdToDelete(null);
+  }, [idToDelete]);
+
+  const fetchData = async (page, limit, searchTerm) => {
+    const result = await axios.get(
+      `http://localhost:7000/?page=${page}&limit=${limit}&searchTerm=${searchTerm}`
+    );
+    setData(result.data.data);
+    setTotalPages(result.data.totalPages);
+    setCount(result.data.count);
+  };
 
   // Delete Request to delete the Data By Id
   const onDelete = async () => {
@@ -135,7 +139,6 @@ function App() {
           onChange={handleLimitChange}
           value={limit}
         >
-          <option value={5}>5</option>
           <option value={10}>10</option>
           <option value={25}>25</option>
           <option value={50}>50</option>
@@ -153,82 +156,93 @@ function App() {
         </button>
       </div>
 
-      <div>
+      <div className="py-5">
         {data.length === 0 ? (
           <h1 className="text-center p-5">No Result Found!</h1>
         ) : (
-          <table className="table caption-top table-striped table-hover border ">
-            <caption>
-              <h3>List of Notes</h3>
-            </caption>
-            <thead className="tr">
-              <tr className="">
-                <th className="py-4 text-left align-middle">ID</th>
-                <th className="py-4 text-left align-middle">Project Name</th>
-                <th className="py-4 text-left align-middle">Version</th>
-                <th className="py-4 text-left align-middle">Build Number</th>
-                <th className="py-4 text-left align-middle">Description</th>
-                <th className="py-4 text-left align-middle">Created Date</th>
-                <th className="py-4 text-left align-middle">Edit</th>
-                <th className="py-4 text-left align-middle">Delete</th>
-              </tr>
-            </thead>
-            <tbody>
-              {data.map((item) => (
-                <tr key={item.id}>
-                  <td className="text-left align-middle">{item.id}</td>
-                  <td className="text-left align-middle">
-                    {item.project_name}
-                  </td>
-                  <td className="text-left align-middle">{item.version}</td>
-                  <td className="text-left align-middle">{item.build_no}</td>
-                  <td className="text-left align-middle">
-                    {item.release_note}
-                  </td>
-                  <td className="text-left align-middle">{item.date}</td>
-                  <td className="text-left align-middle">
-                    {/* Update Button */}
-                    <button
-                      type="button"
-                      className="btn btn-info btn-sm"
-                      onClick={() => {
-                        setId(item.id);
-                        GoToUpdate(item.id);
-                      }}
-                    >
-                      <FaEdit />
-                    </button>
-                  </td>
-
-                  <td className="text-center">
-                    <div>
-                      {/* Delete Button */}
+          <div className="border" style={{ height: "500px", overflow: "auto" }}>
+            <table
+              className="table table-hover table-fixed"
+              style={{ width: "100%", tableLayout: "fixed" }}
+            >
+              <thead
+                className="tr"
+                style={{
+                  position: "sticky",
+                  top: "0",
+                  backgroundColor: "#fff",
+                }}
+              >
+                <tr className="">
+                  <th className="py-4 text-left align-middle">ID</th>
+                  <th className="py-4 text-left align-middle">Project Name</th>
+                  <th className="py-4 text-left align-middle">Version</th>
+                  <th className="py-4 text-left align-middle">Build Number</th>
+                  <th className="py-4 text-left align-middle">Description</th>
+                  <th className="py-4 text-left align-middle">Created Date</th>
+                  <th className="py-4 text-left align-middle">Edit</th>
+                  <th className="py-4 text-left align-middle">Delete</th>
+                </tr>
+              </thead>
+              <tbody>
+                {data.map((item) => (
+                  <tr key={item.id}>
+                    <td className="text-left align-middle">{item.id}</td>
+                    <td className="text-left align-middle">
+                      {item.project_name}
+                    </td>
+                    <td className="text-left align-middle">{item.version}</td>
+                    <td className="text-left align-middle">{item.build_no}</td>
+                    <td className="text-left align-middle">
+                      {item.release_note}
+                    </td>
+                    <td className="text-left align-middle">{item.date}</td>
+                    <td className="text-left align-middle">
+                      {/* Update Button */}
                       <button
                         type="button"
                         className="btn btn-info btn-sm"
                         onClick={() => {
                           setId(item.id);
-                          handleShow();
+                          GoToUpdate(item.id);
                         }}
                       >
-                        <FaTrashAlt />
+                        <FaEdit />
                       </button>
-                    </div>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+                    </td>
+
+                    <td className="text-left align-middle">
+                      <div>
+                        {/* Delete Button */}
+                        <button
+                          type="button"
+                          className="btn btn-info btn-sm"
+                          onClick={() => {
+                            setId(item.id);
+                            handleShow();
+                          }}
+                        >
+                          <FaTrashAlt />
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         )}
       </div>
       <div className="d-flex justify-content-end mt-5">
-        {data.length > 0 ? (
+        {/* {data.length > 0 ? ( */}
+        {count > limit && (
           <Pagination
             defaultActivePage={page}
             totalPages={totalPages}
             onPageChange={(e, { activePage }) => handlePageChange(activePage)}
           />
-        ) : null}
+        )}
+        {/* ) : null} */}
 
         {/* Delete Modal */}
         <Modal show={show} onHide={handleClose}>

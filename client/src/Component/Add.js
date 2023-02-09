@@ -2,10 +2,12 @@ import axios from "axios";
 import "../App.css";
 import { useNavigate, useLocation } from "react-router-dom";
 import { Button } from "react-bootstrap";
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Modal from "react-bootstrap/Modal";
 
 const AddData = () => {
+  const [warning, setWarning] = useState("");
+
   // Handle Search Limit in Add Page
   const navigate = useNavigate();
   const PageData = useLocation().state;
@@ -43,11 +45,15 @@ const AddData = () => {
   const handleClose = () => setShow(false);
   const handleShow = () => setShow(true);
 
+  const handelNavigate = () => {
+    navigate("/", { state: { search: searchTerm, lim: limit } });
+  };
+
   const { project_name, version, build_no, release_note } = data;
 
   const handleChange = (e) => {
     setData((prev) => ({ ...prev, [e.target.name]: e.target.value }));
-    setErrors((prev) => ({ ...prev, [e.target.name]: e.target.value }));
+    
   };
 
   // Add Form Validation using Regular Expression
@@ -96,19 +102,40 @@ const AddData = () => {
     return isValid;
   };
 
-  // Post request to Add Data
-  const AddNotes = (e) => {
+  // Function to handle the creation of a new project
+  const AddNotes = async (e) => {
     e.preventDefault();
     if (validate()) {
       try {
-        axios.post(`http://localhost:7000/`, data);
-        // console.log(data);
-        handleShow();
-      } catch (err) {
-        console.log(err);
+        if (await axios.post("http://localhost:7000/", data)) {
+          handleShow();
+        }
+      } catch (error) {
+        if (error.response.status === 400) {
+          setWarning(error.response.data.error);
+        } else {
+          console.error(error);
+        }
       }
     }
+    handleShow();
   };
+
+  useEffect(() => {
+    if (warning) {
+      setTimeout(() => {
+        setWarning("");
+      }, 3000);
+    }
+  }, [warning]);
+
+  useEffect(() => {
+    if (errors) {
+      setTimeout(() => {
+        setErrors("");
+      }, 3000);
+    }
+  }, [errors]);
 
   return (
     <div className="form-group d-flex flex-column container center_div mt-5">
@@ -116,6 +143,9 @@ const AddData = () => {
         <h1>Add New Notes</h1>
       </div>
       <div className="mb-3 mt-3">
+        <label className="py-2">
+          <h4>Project Name</h4>
+        </label>
         <input
           className="form-control"
           type="text"
@@ -128,9 +158,15 @@ const AddData = () => {
         {errors.project_name && (
           <div className="alert alert-danger">{errors.project_name}</div>
         )}
+
+        {/* Render the warning message if it exists */}
+        {warning && <div style={{ color: "red" }}>{warning}</div>}
       </div>
 
       <div className="mb-3">
+        <label className="py-2">
+          <h4>Version</h4>
+        </label>
         <input
           className="form-control"
           type="number"
@@ -146,6 +182,9 @@ const AddData = () => {
       </div>
 
       <div className="mb-3">
+        <label className="py-2">
+          <h4>Build Number</h4>
+        </label>
         <input
           className="form-control"
           type="number"
@@ -161,6 +200,9 @@ const AddData = () => {
       </div>
 
       <div className="mb-3">
+        <label className="py-2">
+          <h4>Release Note</h4>
+        </label>
         <textarea
           className="form-control"
           rows={5}
@@ -197,7 +239,7 @@ const AddData = () => {
             </Modal.Header>
             <Modal.Body>Record Added successfully!</Modal.Body>
             <Modal.Footer>
-              <Button variant="primary" onClick={handleClose}>
+              <Button variant="primary" onClick={handelNavigate}>
                 OK
               </Button>
             </Modal.Footer>

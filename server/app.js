@@ -8,7 +8,7 @@ const cors = require("cors");
 //access-control-allow-credentials:true
 const corsOptions = {
   origin: "http://localhost:3000",
-  credentials: true, 
+  credentials: true,
   optionSuccessStatus: 200,
 };
 
@@ -26,7 +26,11 @@ const sequelize = new Sequelize("crud", "santhanakrishnan", "Askrrdc@#$sql1", {
 const crud_table = sequelize.define(
   "crud_table",
   {
-    project_name: Sequelize.STRING,
+    project_name: {
+      type: Sequelize.STRING,
+      unique: true,
+      allowNull: false,
+    },
     version: Sequelize.DECIMAL,
     build_no: Sequelize.DECIMAL,
     release_note: Sequelize.TEXT,
@@ -44,21 +48,27 @@ app.post("/", async (req, res) => {
   const release_note = req.body.release_note;
   const date = req.body.date;
   const isDelete = req.body.isDelete;
-  const post_data = crud_table.build({
-    project_name,
-    version,
-    build_no,
-    release_note,
-    date,
-    isDelete,
-  });
-  await post_data.save();
-  res.redirect("/");
+
+  // Check if the project name already exists
+  const project = await crud_table.findOne({ where: { project_name } });
+  if (project) {
+    return res.status(400).send({ error: "Project name already exists" });
+  } else {
+    const post_data = await crud_table.create({
+      project_name,
+      version,
+      build_no,
+      release_note,
+      date,
+      isDelete,
+    });
+  }
 });
 
-// Get All Data
+
+// Get All Data with pagination
 app.get("/", async (req, res) => {
-  const limit = parseInt(req.query.limit) || null;
+  const limit = parseInt(req.query.limit) || 10;
   const currentPage = parseInt(req.query.page) || 1;
   const offset = Number((currentPage - 1) * limit);
   const { project_name, id, build_no, searchTerm } = req.query;
@@ -85,6 +95,7 @@ app.get("/", async (req, res) => {
     where,
     limit,
     offset,
+    order: [["id", "DESC"]], // sort data in descending order based on id
   });
 
   const totalPages = Math.ceil(count / limit);
@@ -113,7 +124,7 @@ app.put("/:id", async (req, res) => {
     const update_data = await crud_table.update(data, {
       where: { id },
     });
-    res.redirect("/");
+    res.send("Data Updated");
   } catch (err) {
     res.send;
   }
