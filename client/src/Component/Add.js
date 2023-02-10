@@ -2,7 +2,7 @@ import axios from "axios";
 import "../App.css";
 import { useNavigate, useLocation } from "react-router-dom";
 import { Button } from "react-bootstrap";
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import Modal from "react-bootstrap/Modal";
 
 const AddData = () => {
@@ -28,7 +28,7 @@ const AddData = () => {
 
   const [data, setData] = useState({
     project_name: "",
-    version: "",
+    version: Number,
     build_no: "",
     release_note: "",
     date: `${createdDate}`,
@@ -52,7 +52,7 @@ const AddData = () => {
   const { project_name, version, build_no, release_note } = data;
 
   const handleChange = (e) => {
-    setData((prev) => ({ ...prev, [e.target.name]: e.target.value }));
+    setData((prev) => ({ ...prev, [e.target.name]: e.target.value.trim() }));
     setWarning("");
     setErrors("");
   };
@@ -63,7 +63,7 @@ const AddData = () => {
     const projectNameRegex = /^[a-zA-Z0-9\s]+$/;
     const versionRegex = /^[0-9]+(\.[0-9]+)*$/;
     const buildNumberRegex = /^[0-9]+(\.[0-9]+)*$/;
-    const releaseNoteRegex = /^[a-zA-Z0-9\s]+$/;
+    const releaseNoteRegex = /[^\r\n]+((\r|\n|\r\n)[^\r\n]+)*/;
 
     if (!projectNameRegex.test(project_name)) {
       setErrors((prev) => ({
@@ -128,90 +128,92 @@ const AddData = () => {
       <div className="mt-5">
         <h1>Add New Notes</h1>
       </div>
-      <div className="mb-3 mt-3">
-        <label className="py-2">
-          <h4>Project Name</h4>
-        </label>
-        <input
-          className="form-control"
-          type="text"
-          placeholder="Project Name"
-          name="project_name"
-          value={project_name}
-          onChange={handleChange}
-          id="my_input"
-        />
-        {errors.project_name && (
-          <div className="alert alert-danger">{errors.project_name}</div>
-        )}
+      <form>
+        <div className="mb-3 mt-3">
+          <label className="py-2">
+            <h4>Project Name</h4>
+          </label>
+          <input
+            className="form-control"
+            type="text"
+            placeholder="Project Name"
+            name="project_name"
+            value={project_name}
+            onChange={handleChange}
+            id="my_input"
+          />
+          {errors.project_name && (
+            <div className="alert alert-danger">{errors.project_name}</div>
+          )}
 
-        {/* Render the warning message if it exists */}
-        {warning && <div className="alert alert-danger">{warning}</div>}
-      </div>
+          {/* Render the warning message if it exists */}
+          {warning && <div className="alert alert-danger">{warning}</div>}
+        </div>
 
-      <div className="mb-3">
-        <label className="py-2">
-          <h4>Version</h4>
-        </label>
-        <input
-          className="form-control"
-          type="number"
-          placeholder="Version"
-          name="version"
-          value={version}
-          onChange={handleChange}
-          id="my_input"
-        />
-        {errors.version && (
-          <div className="alert alert-danger">{errors.version}</div>
-        )}
-      </div>
+        <div className="mb-3">
+          <label className="py-2">
+            <h4>Version</h4>
+          </label>
+          <input
+            className="form-control"
+            type="number"
+            placeholder="Version"
+            name="version"
+            value={version}
+            onChange={handleChange}
+            id="my_input"
+          />
+          {errors.version && (
+            <div className="alert alert-danger">{errors.version}</div>
+          )}
+        </div>
 
-      <div className="mb-3">
-        <label className="py-2">
-          <h4>Build Number</h4>
-        </label>
-        <input
-          className="form-control"
-          type="number"
-          placeholder="Build Number"
-          name="build_no"
-          value={build_no}
-          onChange={handleChange}
-          id="my_input"
-        />
-        {errors.build_no && (
-          <div className="alert alert-danger">{errors.build_no}</div>
-        )}
-      </div>
+        <div className="mb-3">
+          <label className="py-2">
+            <h4>Build Number</h4>
+          </label>
+          <input
+            className="form-control"
+            type="number"
+            placeholder="Build Number"
+            name="build_no"
+            value={build_no}
+            onChange={handleChange}
+            id="my_input"
+          />
+          {errors.build_no && (
+            <div className="alert alert-danger">{errors.build_no}</div>
+          )}
+        </div>
 
-      <div className="mb-3">
-        <label className="py-2">
-          <h4>Release Note</h4>
-        </label>
-        <textarea
-          className="form-control"
-          rows={5}
-          type="text"
-          placeholder="Release Note"
-          name="release_note"
-          value={release_note}
-          onChange={handleChange}
-          id="my_input"
-        />
-        {errors.release_note && (
-          <div className="alert alert-danger">{errors.release_note}</div>
-        )}
-      </div>
+        <div className="mb-3">
+          <label className="py-2">
+            <h4>Release Note</h4>
+          </label>
+          <textarea
+            className="form-control"
+            rows={5}
+            type="text"
+            placeholder="Release Note"
+            name="release_note"
+            value={release_note}
+            onChange={handleChange}
+            id="my_input"
+          />
+          {errors.release_note && (
+            <div className="alert alert-danger">{errors.release_note}</div>
+          )}
+        </div>
 
-      <div className="date mb-3">
-        <input
-          type="hidden"
-          name="date"
-          defaultValue={createdDate}
-          onChange={handleChange}
-        />
-      </div>
+        <div className="date mb-3">
+          <input
+            type="hidden"
+            name="date"
+            defaultValue={createdDate}
+            onChange={handleChange}
+          />
+        </div>
+      </form>
 
       <div className="d-flex">
         <div className="mb-3 m-2">

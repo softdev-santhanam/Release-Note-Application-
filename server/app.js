@@ -22,25 +22,34 @@ const sequelize = new Sequelize("crud", "santhanakrishnan", "Askrrdc@#$sql1", {
   dialect: "mysql",
 });
 
-// Create a Table
-const crud_table = sequelize.define(
-  "crud_table",
+/* Start Create a Table */
+const release_notes_data = sequelize.define(
+  "release_notes_data",
   {
     project_name: {
       type: Sequelize.STRING,
       unique: true,
       allowNull: false,
     },
-    version: Sequelize.DECIMAL,
-    build_no: Sequelize.DECIMAL,
+    version: {
+      type: Sequelize.STRING,
+      unique: true,
+      allowNull: false,
+    },
+    build_no: {
+      type: Sequelize.STRING,
+      unique: true,
+      allowNull: false,
+    },
     release_note: Sequelize.TEXT,
     date: Sequelize.STRING,
     isDelete: Sequelize.STRING,
   },
-  { tableName: "crud_table" }
+  { tableName: "release_notes_data" }
 );
+/* End Create a Table */
 
-// Post Data
+/* Start Post Data */
 app.post("/", async (req, res) => {
   const project_name = req.body.project_name;
   const version = req.body.version;
@@ -50,27 +59,48 @@ app.post("/", async (req, res) => {
   const isDelete = req.body.isDelete;
 
   // Check if the project name already exists
-  const project = await crud_table.findOne({ where: { project_name } });
+  const project = await release_notes_data.findOne({ where: { project_name } });
   if (project) {
-    return res.status(400).send({ error: "Project name already exists" });
-  }
-
-  try {
-    const post_data = await crud_table.create({
-      project_name,
-      version,
-      build_no,
-      release_note,
-      date,
-      isDelete,
+    // Check for the isDelete "0" or "1"
+    const find_data = await release_notes_data.findOne({
+      where: { project_name, version, build_no, isDelete: "1" },
     });
-    res.send("Data Updated");
-  } catch (err) {
-    res.send;
+    // if isDelete is "0"
+    if (find_data) {
+      // Update the isDelete field to "1"
+      try {
+        const update_isDelete = await release_notes_data.update(
+          { isDelete: "0" },
+          { where: { project_name, version, build_no, isDelete: "1" } }
+        );
+        res.status(400).send({ error: "Data Successfully Retrieved" });
+      } catch (err) {
+        res.send(err);
+      }
+    } else {
+      // when ever I entered the float data its showing data not found
+      return res.status(400).send({ error: "Project name already exists" });
+    }
+  } else {
+    try {
+      const post_data = await release_notes_data.create({
+        project_name,
+        version,
+        build_no,
+        release_note,
+        date,
+        isDelete,
+      });
+      f;
+      res.send("Data Updated");
+    } catch (err) {
+      res.send;
+    }
   }
 });
+/* End Post Data */
 
-// Get All Data with pagination
+/* Start Get All Data with pagination */
 app.get("/", async (req, res) => {
   const limit = parseInt(req.query.limit) || 10;
   const currentPage = parseInt(req.query.page) || 1;
@@ -95,7 +125,7 @@ app.get("/", async (req, res) => {
     where.build_no = build_no;
   }
 
-  const { count, rows } = await crud_table.findAndCountAll({
+  const { count, rows } = await release_notes_data.findAndCountAll({
     where,
     limit,
     offset,
@@ -106,12 +136,13 @@ app.get("/", async (req, res) => {
 
   res.send({ data: rows, totalPages, count });
 });
+/* End Get All Data with pagination */
 
-// Get Unique data by ID
+/* Start Get Unique data by ID */
 app.get("/:id", async (req, res) => {
   const id = req.params.id;
   try {
-    const find_one = await crud_table.findOne({
+    const find_one = await release_notes_data.findOne({
       where: { id },
     });
     res.send(find_one);
@@ -119,53 +150,84 @@ app.get("/:id", async (req, res) => {
     res.send(err);
   }
 });
+/* End Get Unique data by ID */
 
-// Update data
+/* Start Update data */
 app.put("/:id", async (req, res) => {
   const id = req.params.id;
   const data = req.body;
+  const project_name = req.body.project_name;
+  const version = req.body.version;
+  const build_no = req.body.build_no;
 
-  const project = await crud_table.findOne({
-    where: { project_name: data.project_name, id: { [Sequelize.Op.ne]: id } },
-  });
-
+  // Check if the project name already exists
+  const project = await release_notes_data.findOne({ where: { project_name } });
   if (project) {
-    return res.status(400).send({ error: "Project name already exists" });
-  }
+    // Check for the isDelete "0" or "1"
+    const find_data = await release_notes_data.findOne({
+      where: { project_name, version, build_no, isDelete: "1" },
+    });
+    // if isDelete is "0"
+    if (find_data) {
+      // Update the isDelete field to "1"
+      try {
+        const update_isDelete = await release_notes_data.update(
+          { isDelete: "0" },
+          { where: { project_name, version, build_no, isDelete: "1" } }
+        );
+        res.status(400).send({ error: "Data Successfully Retrieved" });
+      } catch (err) {
+        res.send(err);
+      }
+    } else {
+      // if the idDelete is "0" the data is already available on the table just update it
+      const projects = await release_notes_data.findOne({
+        where: { project_name: project_name, id: { [Sequelize.Op.ne]: id } },
+      });
 
-  try {
-    await crud_table.update(data, { where: { id } });
-    res.send("Data Updated");
-  } catch (err) {
-    res.send(err);
+      if (projects) {
+        return res.status(400).send({ error: "Project name already exists" });
+      }
+
+      try {
+        await release_notes_data.update(data, { where: { id } });
+        res.send("Data Updated");
+      } catch (err) {
+        res.send(err);
+      }
+    }
+  } else {
+    const projects = await release_notes_data.findOne({
+      where: { project_name: project_name, id: { [Sequelize.Op.ne]: id } },
+    });
+
+    if (projects) {
+      return res.status(400).send({ error: "Project name already exists" });
+    }
+
+    try {
+      await release_notes_data.update(data, { where: { id } });
+      res.send("Data Updated");
+    } catch (err) {
+      res.send(err);
+    }
   }
 });
+/* End Update data */
 
-// Delete data
+/* start Delete data */
 app.delete("/:id", async (req, res) => {
   const id = req.params.id;
 
   try {
     // Instead of deleting the data, we just update the isDelete column to 1
-    await crud_table.update({ isDelete: "1" }, { where: { id } });
+    await release_notes_data.update({ isDelete: "1" }, { where: { id } });
     res.send("Data Deleted");
   } catch (err) {
     res.send(err);
   }
 });
-
-// Add deleted data
-app.post("/addDeletedData/:id", async (req, res) => {
-  const id = req.params.id;
-
-  try {
-    // We update the isDelete column back to 0
-    await crud_table.update({ isDelete: "0" }, { where: { id } });
-    res.send("Data added back");
-  } catch (err) {
-    res.send(err);
-  }
-});
+/* start Delete data */
 
 app.listen(port, () => {
   console.log(`Server connected at the port ${port}`);

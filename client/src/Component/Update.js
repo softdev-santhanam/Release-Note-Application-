@@ -51,7 +51,7 @@ const EditEmployee = () => {
   const { project_name, version, build_no, release_note } = data;
 
   const handleChange = (e) => {
-    setData((prev) => ({ ...prev, [e.target.name]: e.target.value }));
+    setData((prev) => ({ ...prev, [e.target.name]: e.target.value.trim() }));
     setWarning("");
     setErrors("");
   };
@@ -62,7 +62,7 @@ const EditEmployee = () => {
     const projectNameRegex = /^[a-zA-Z0-9\s]+$/;
     const versionRegex = /^[0-9]+(\.[0-9]+)*$/;
     const buildNumberRegex = /^[0-9]+(\.[0-9]+)*$/;
-    const releaseNoteRegex = /^[a-zA-Z0-9\s]+$/;
+    const releaseNoteRegex = /[^\r\n]+((\r|\n|\r\n)[^\r\n]+)*/;
 
     if (!projectNameRegex.test(project_name)) {
       setErrors((prev) => ({
@@ -94,8 +94,7 @@ const EditEmployee = () => {
     if (!releaseNoteRegex.test(release_note)) {
       setErrors((prev) => ({
         ...prev,
-        release_note:
-          "Release Note is invalid. Please insert only letters and numbers",
+        release_note: "Release Note is required",
       }));
       isValid = false;
     }

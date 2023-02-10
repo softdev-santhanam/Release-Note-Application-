@@ -1,4 +1,5 @@
 import React, { useState, useMemo, useEffect } from "react";
+import "../App.css";
 import axios from "axios";
 import { useNavigate, useLocation } from "react-router-dom";
 import { Pagination } from "semantic-ui-react";
@@ -59,6 +60,7 @@ function App() {
 
   useEffect(() => {
     searchState();
+    // eslint-disable-next-line
   }, [location.state]);
 
   const searchState = () => {
@@ -85,12 +87,13 @@ function App() {
   };
 
   const handleSearchChange = (e) => {
-    setSearchTerm(e.target.value);
+    setSearchTerm(e.target.value.trim());
   };
 
   // Function to clear the search term
   const handleClear = () => {
     setSearchTerm("");
+    fetchData(page, limit, "");
   };
 
   // Debounce to limit the rate of execution of search input action
@@ -107,19 +110,29 @@ function App() {
   // useEffect hook to fetch the data from database and set it to states
   useEffect(() => {
     fetchData(page, limit, searchTerm);
+    // eslint-disable-next-line
   }, [page, limit]);
 
   useEffect(() => {
     fetchData(initialValue, limit, searchTerm);
+    // eslint-disable-next-line
+  }, [limit]);
+
+  useEffect(() => {
+    debouncedResults();
+    fetchData(initialValue, limit, searchTerm);
+    // eslint-disable-next-line
   }, [searchTerm]);
 
   useEffect(() => {
     fetchData(initialValue, limit, searchTerm);
+    // eslint-disable-next-line
   }, [searchTerm, limit]);
 
   useEffect(() => {
     fetchData(page, limit, searchTerm);
     setIdToDelete(null);
+    // eslint-disable-next-line
   }, [idToDelete]);
 
   const fetchData = async (page, limit, searchTerm) => {
@@ -154,8 +167,10 @@ function App() {
             className="rounded-2 p-2 border"
             type="text"
             placeholder="Search..."
-            defaultValue={searchTerm}
-            onChange={debouncedResults}
+            value={searchTerm}
+            onChange={(e) => {
+              setSearchTerm(e.target.value.trim());
+            }}
           />
           <button className="rounded-2 p-2 me-5 border" onClick={handleClear}>
             <FaRegTimesCircle />
@@ -192,15 +207,8 @@ function App() {
               className="table table-hover table-fixed"
               style={{ width: "100%", tableLayout: "fixed" }}
             >
-              <thead
-                className="tr"
-                style={{
-                  position: "sticky",
-                  top: "0",
-                  backgroundColor: "#fff",
-                }}
-              >
-                <tr className="">
+              <thead className="thead">
+                <tr className="thead-tr">
                   <th className="py-4 p-5 text-left align-middle">ID</th>
                   <th className="py-4 text-left align-middle">Project Name</th>
                   <th className="py-4 text-left align-middle">Version</th>
@@ -224,7 +232,9 @@ function App() {
                       className="text-left align-middle"
                       style={{ maxHeight: "50%", overflow: "hidden" }}
                     >
-                      {item.release_note}
+                      <div className="description-table">
+                        {item.release_note}
+                      </div>
                     </td>
                     <td className="text-left align-middle">{item.date}</td>
                     <td className="text-left align-middle">
