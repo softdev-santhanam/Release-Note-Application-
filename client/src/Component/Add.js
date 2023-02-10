@@ -53,7 +53,8 @@ const AddData = () => {
 
   const handleChange = (e) => {
     setData((prev) => ({ ...prev, [e.target.name]: e.target.value }));
-    
+    setWarning("");
+    setErrors("");
   };
 
   // Add Form Validation using Regular Expression
@@ -106,36 +107,21 @@ const AddData = () => {
   const AddNotes = async (e) => {
     e.preventDefault();
     if (validate()) {
+      console.log("try");
       try {
-        if (await axios.post("http://localhost:7000/", data)) {
-          handleShow();
-        }
+        await axios.post("http://localhost:7000/", data);
+        console.log(`handleShow`);
+        handleShow();
       } catch (error) {
         if (error.response.status === 400) {
+          console.log("Duplication");
           setWarning(error.response.data.error);
         } else {
           console.error(error);
         }
       }
     }
-    handleShow();
   };
-
-  useEffect(() => {
-    if (warning) {
-      setTimeout(() => {
-        setWarning("");
-      }, 3000);
-    }
-  }, [warning]);
-
-  useEffect(() => {
-    if (errors) {
-      setTimeout(() => {
-        setErrors("");
-      }, 3000);
-    }
-  }, [errors]);
 
   return (
     <div className="form-group d-flex flex-column container center_div mt-5">
@@ -160,7 +146,7 @@ const AddData = () => {
         )}
 
         {/* Render the warning message if it exists */}
-        {warning && <div style={{ color: "red" }}>{warning}</div>}
+        {warning && <div className="alert alert-danger">{warning}</div>}
       </div>
 
       <div className="mb-3">

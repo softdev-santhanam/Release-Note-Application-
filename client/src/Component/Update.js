@@ -5,6 +5,8 @@ import Button from "react-bootstrap/Button";
 import Modal from "react-bootstrap/Modal";
 
 const EditEmployee = () => {
+  const [warning, setWarning] = useState("");
+
   // Handle Search Limit in Update Page
   const navigate = useNavigate();
   const PageData = useLocation().state;
@@ -39,12 +41,8 @@ const EditEmployee = () => {
 
   // State Management to handel the Model
   const [show, setShow] = useState(false);
-
   const handleShow = () => setShow(true);
-
-  const handleClose = () => {
-    navigate("/", { state: { search: searchTerm, lim: limit, pg: page } });
-  };
+  const handleClose = () => setShow(false);
 
   const handelNavigate = () => {
     navigate("/", { state: { search: searchTerm, lim: limit, pg: page } });
@@ -54,6 +52,8 @@ const EditEmployee = () => {
 
   const handleChange = (e) => {
     setData((prev) => ({ ...prev, [e.target.name]: e.target.value }));
+    setWarning("");
+    setErrors("");
   };
 
   // Update Form Validation using Regular Expression
@@ -94,7 +94,8 @@ const EditEmployee = () => {
     if (!releaseNoteRegex.test(release_note)) {
       setErrors((prev) => ({
         ...prev,
-        release_note: "Release Note is invalid. Please insert only letters and numbers",
+        release_note:
+          "Release Note is invalid. Please insert only letters and numbers",
       }));
       isValid = false;
     }
@@ -103,15 +104,21 @@ const EditEmployee = () => {
   };
 
   // Update request to specific data by id
-  const updateNotes = (e) => {
+  const updateNotes = async (e) => {
     e.preventDefault();
     if (validate()) {
+      console.log("try");
       try {
-        axios.put(`http://localhost:7000/${id}`, data);
-        // console.log(data);
+        await axios.put(`http://localhost:7000/${id}`, data);
+        console.log(`handleShow`);
         handleShow();
-      } catch (err) {
-        console.log(err);
+      } catch (error) {
+        if (error.response.status === 400) {
+          console.log("Duplication");
+          setWarning(error.response.data.error);
+        } else {
+          console.error(error);
+        }
       }
     }
   };
@@ -160,14 +167,6 @@ const EditEmployee = () => {
     return false;
   };
 
-  useEffect(() => {
-    if (errors) {
-      setTimeout(() => {
-        setErrors("");
-      }, 3000);
-    }
-  }, [errors]);
-
   return (
     <div className="form-group d-flex flex-column container center_div mt-5">
       <div className="mt-5">
@@ -189,6 +188,9 @@ const EditEmployee = () => {
         {errors.project_name && (
           <div className="alert alert-danger">{errors.project_name}</div>
         )}
+
+        {/* Render the warning message if it exists */}
+        {warning && <div className="alert alert-danger">{warning}</div>}
       </div>
 
       <div className="mb-3">

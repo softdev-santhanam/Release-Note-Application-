@@ -53,7 +53,9 @@ app.post("/", async (req, res) => {
   const project = await crud_table.findOne({ where: { project_name } });
   if (project) {
     return res.status(400).send({ error: "Project name already exists" });
-  } else {
+  }
+
+  try {
     const post_data = await crud_table.create({
       project_name,
       version,
@@ -62,9 +64,11 @@ app.post("/", async (req, res) => {
       date,
       isDelete,
     });
+    res.send("Data Updated");
+  } catch (err) {
+    res.send;
   }
 });
-
 
 // Get All Data with pagination
 app.get("/", async (req, res) => {
@@ -120,27 +124,46 @@ app.get("/:id", async (req, res) => {
 app.put("/:id", async (req, res) => {
   const id = req.params.id;
   const data = req.body;
+
+  const project = await crud_table.findOne({
+    where: { project_name: data.project_name, id: { [Sequelize.Op.ne]: id } },
+  });
+
+  if (project) {
+    return res.status(400).send({ error: "Project name already exists" });
+  }
+
   try {
-    const update_data = await crud_table.update(data, {
-      where: { id },
-    });
+    await crud_table.update(data, { where: { id } });
     res.send("Data Updated");
   } catch (err) {
-    res.send;
+    res.send(err);
   }
 });
 
 // Delete data
 app.delete("/:id", async (req, res) => {
   const id = req.params.id;
+
   try {
-    const delete_data = await crud_table.update(
-      { isDelete: "1" },
-      { where: { id } }
-    );
-    res.send({ status: "success", message: "Data deleted successfully" });
+    // Instead of deleting the data, we just update the isDelete column to 1
+    await crud_table.update({ isDelete: "1" }, { where: { id } });
+    res.send("Data Deleted");
   } catch (err) {
-    res.send({ status: "error", message: "Error while deleting data" });
+    res.send(err);
+  }
+});
+
+// Add deleted data
+app.post("/addDeletedData/:id", async (req, res) => {
+  const id = req.params.id;
+
+  try {
+    // We update the isDelete column back to 0
+    await crud_table.update({ isDelete: "0" }, { where: { id } });
+    res.send("Data added back");
+  } catch (err) {
+    res.send(err);
   }
 });
 

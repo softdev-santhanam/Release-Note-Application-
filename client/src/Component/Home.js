@@ -3,7 +3,12 @@ import axios from "axios";
 import { useNavigate, useLocation } from "react-router-dom";
 import { Pagination } from "semantic-ui-react";
 import "semantic-ui-css/semantic.min.css";
-import { FaEdit, FaTrashAlt, FaRegPlusSquare } from "react-icons/fa";
+import {
+  FaEdit,
+  FaTrashAlt,
+  FaRegPlusSquare,
+  FaRegTimesCircle,
+} from "react-icons/fa";
 import debounce from "lodash.debounce";
 import Button from "react-bootstrap/Button";
 import Modal from "react-bootstrap/Modal";
@@ -16,27 +21,31 @@ function App() {
 
   // State Management to get all the data
   const [data, setData] = useState([]);
-  console.log(data);
+  // console.log(data);
 
   // State Management for Pagination
   const [totalPages, setTotalPages] = useState(0);
   const [page, setPage] = useState(1);
+
   const [initialValue] = useState(1);
   // Add a state to keep track of the search term and limit
   const [searchTerm, setSearchTerm] = useState("");
   const [limit, setLimit] = useState(10);
-  /* console.log(searchTerm);
-  console.log(limit); */
+
+  // If the total records less then or equal to limits, the pagination should not be display
+  const [count, setCount] = useState("");
+
+  console.log(`Search: ${searchTerm}`);
+  console.log(`Limit: ${limit}`);
+  console.log(`Current Page: ${page}`);
+  console.log(`Total Page: ${totalPages}`);
+  console.log(`Count: ${count}`);
 
   // State Management for ID
   const [id, setId] = useState(null);
 
   // State Management to After delete the correct data
   const [idToDelete, setIdToDelete] = useState(null);
-
-  // If the total records less then or equal to limits, the pagination should not be display
-  const [count, setCount] = useState("");
-  console.log(count);
 
   const GoToUpdate = (id) => {
     navigate("update/" + id, {
@@ -49,12 +58,16 @@ function App() {
   };
 
   useEffect(() => {
+    searchState();
+  }, [location.state]);
+
+  const searchState = () => {
     if (location.state) {
       setSearchTerm(location.state.search);
       setLimit(location.state.lim);
       setPage(initialValue);
     }
-  }, [location.state]);
+  };
 
   // State Management to handel the Model
   const [show, setShow] = useState(false);
@@ -73,6 +86,11 @@ function App() {
 
   const handleSearchChange = (e) => {
     setSearchTerm(e.target.value);
+  };
+
+  // Function to clear the search term
+  const handleClear = () => {
+    setSearchTerm("");
   };
 
   // Debounce to limit the rate of execution of search input action
@@ -94,6 +112,10 @@ function App() {
   useEffect(() => {
     fetchData(initialValue, limit, searchTerm);
   }, [searchTerm]);
+
+  useEffect(() => {
+    fetchData(initialValue, limit, searchTerm);
+  }, [searchTerm, limit]);
 
   useEffect(() => {
     fetchData(page, limit, searchTerm);
@@ -125,17 +147,22 @@ function App() {
   };
 
   return (
-    <div className="d-flex flex-column justify-content-center m-5">
+    <div className="d-flex flex-column justify-content-center mx-5 mt-3">
       <div className="d-flex justify-content-end">
-        <input
-          className="me-5 rounded-2 p-2"
-          type="text"
-          placeholder="Search..."
-          defaultValue={searchTerm}
-          onChange={debouncedResults}
-        />
+        <div>
+          <input
+            className="rounded-2 p-2 border"
+            type="text"
+            placeholder="Search..."
+            defaultValue={searchTerm}
+            onChange={debouncedResults}
+          />
+          <button className="rounded-2 p-2 me-5 border" onClick={handleClear}>
+            <FaRegTimesCircle />
+          </button>
+        </div>
         <select
-          className="me-5 rounded-2 p-2"
+          className="me-5 rounded-2 p-2 border"
           onChange={handleLimitChange}
           value={limit}
         >
@@ -156,8 +183,8 @@ function App() {
         </button>
       </div>
 
-      <div className="py-5">
-        {data.length === 0 ? (
+      <div className="mt-3">
+        {count === 0 ? (
           <h1 className="text-center p-5">No Result Found!</h1>
         ) : (
           <div className="border" style={{ height: "500px", overflow: "auto" }}>
@@ -174,26 +201,29 @@ function App() {
                 }}
               >
                 <tr className="">
-                  <th className="py-4 text-left align-middle">ID</th>
+                  <th className="py-4 p-5 text-left align-middle">ID</th>
                   <th className="py-4 text-left align-middle">Project Name</th>
                   <th className="py-4 text-left align-middle">Version</th>
                   <th className="py-4 text-left align-middle">Build Number</th>
                   <th className="py-4 text-left align-middle">Description</th>
                   <th className="py-4 text-left align-middle">Created Date</th>
-                  <th className="py-4 text-left align-middle">Edit</th>
-                  <th className="py-4 text-left align-middle">Delete</th>
+                  <th className="py-4 p-5 text-left align-middle">Update</th>
+                  <th className="py-4 p-5 text-left align-middle">Delete</th>
                 </tr>
               </thead>
               <tbody>
                 {data.map((item) => (
                   <tr key={item.id}>
-                    <td className="text-left align-middle">{item.id}</td>
+                    <td className="ps-5 text-left align-middle">{item.id}</td>
                     <td className="text-left align-middle">
                       {item.project_name}
                     </td>
                     <td className="text-left align-middle">{item.version}</td>
                     <td className="text-left align-middle">{item.build_no}</td>
-                    <td className="text-left align-middle">
+                    <td
+                      className="text-left align-middle"
+                      style={{ maxHeight: "50%", overflow: "hidden" }}
+                    >
                       {item.release_note}
                     </td>
                     <td className="text-left align-middle">{item.date}</td>
@@ -201,7 +231,7 @@ function App() {
                       {/* Update Button */}
                       <button
                         type="button"
-                        className="btn btn-info btn-sm"
+                        className="ms-5 btn btn-info btn-sm"
                         onClick={() => {
                           setId(item.id);
                           GoToUpdate(item.id);
@@ -216,7 +246,7 @@ function App() {
                         {/* Delete Button */}
                         <button
                           type="button"
-                          className="btn btn-info btn-sm"
+                          className="ms-5 btn btn-info btn-sm"
                           onClick={() => {
                             setId(item.id);
                             handleShow();
@@ -233,7 +263,7 @@ function App() {
           </div>
         )}
       </div>
-      <div className="d-flex justify-content-end mt-5">
+      <div className="d-flex justify-content-end mt-4">
         {/* {data.length > 0 ? ( */}
         {count > limit && (
           <Pagination
