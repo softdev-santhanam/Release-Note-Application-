@@ -215,7 +215,7 @@ function App() {
                   <th className="py-4 text-left align-middle">Build Number</th>
                   <th className="py-4 text-left align-middle col-md-4">Description</th>
                   <th className="py-4 text-left align-middle">Created Date</th>
-                  <th className="py-4 p-5 text-left align-middle">Update</th>
+                  <th className="py-4 p-5 text-left align-middle">Edit</th>
                   <th className="py-4 p-5 text-left align-middle">Delete</th>
                 </tr>
               </thead>

@@ -4,12 +4,11 @@ import Home from "./Component/Home";
 import Add from "./Component/Add";
 import Update from "./Component/Update";
 
-
 function App() {
   return (
     <div className="main">
       <div className="text-bg-info p-3">
-        <h1 className="text-center ">Release Notes</h1>
+        <h1 className="text-center">Release Notes</h1>
       </div>
       <BrowserRouter>
         <Routes>
