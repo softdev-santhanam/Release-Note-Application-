@@ -28,6 +28,8 @@ const EditEmployee = () => {
     project_name: "",
     version: "",
     build_no: "",
+    pipe_line: "",
+    git_link: "",
     release_note: "",
   });
 
@@ -36,6 +38,8 @@ const EditEmployee = () => {
     project_name: "",
     version: "",
     build_no: "",
+    pipe_line: "",
+    git_link: "",
     release_note: "",
   });
   const [originalData, setOriginalData] = useState({});
@@ -51,10 +55,11 @@ const EditEmployee = () => {
     navigate("/", { state: { search: searchTerm, lim: limit, pg: page } });
   };
 
-  const { project_name, version, build_no, release_note } = data;
+  const { project_name, version, build_no, pipe_line, git_link, release_note } =
+    data;
 
   const handleChange = (e) => {
-    setData((prev) => ({ ...prev, [e.target.name]: e.target.value.trim() }));
+    setData((prev) => ({ ...prev, [e.target.name]: e.target.value }));
     setWarning("");
     setErrors("");
   };
@@ -62,19 +67,11 @@ const EditEmployee = () => {
   // Update Form Validation using Regular Expression
   const validate = () => {
     let isValid = true;
-    const projectNameRegex = /^[a-zA-Z0-9\s]+$/;
     const versionRegex = /^[0-9]+(\.[0-9]+)*$/;
-    const buildNumberRegex = /^[0-9]*$/;
+    const buildNumberRegex = /^[-+]?\d+$/;
     const releaseNoteRegex = /[^\r\n]+((\r|\n|\r\n)[^\r\n]+)*/;
-
-    if (!projectNameRegex.test(project_name)) {
-      setErrors((prev) => ({
-        ...prev,
-        project_name:
-          "Project name is invalid. Please insert only letters and numbers.",
-      }));
-      isValid = false;
-    }
+    const pipeLineRegex = /[^\r\n]+((\r|\n|\r\n)[^\r\n]+)*/;
+    const gitLinkRegex = /[^\r\n]+((\r|\n|\r\n)[^\r\n]+)*/;
 
     if (!versionRegex.test(version)) {
       setErrors((prev) => ({
@@ -88,8 +85,7 @@ const EditEmployee = () => {
     if (!buildNumberRegex.test(build_no)) {
       setErrors((prev) => ({
         ...prev,
-        build_no:
-          "Build number not valid Please enter only Numbers.",
+        build_no: "Build number not valid Please enter only Numbers.",
       }));
       isValid = false;
     }
@@ -98,6 +94,22 @@ const EditEmployee = () => {
       setErrors((prev) => ({
         ...prev,
         release_note: "Release Note is required",
+      }));
+      isValid = false;
+    }
+
+    if (!pipeLineRegex.test(pipe_line)) {
+      setErrors((prev) => ({
+        ...prev,
+        pipe_line: "Pipe Line is required",
+      }));
+      isValid = false;
+    }
+
+    if (!gitLinkRegex.test(git_link)) {
+      setErrors((prev) => ({
+        ...prev,
+        git_link: "GitHub link is required",
       }));
       isValid = false;
     }
@@ -146,6 +158,8 @@ const EditEmployee = () => {
           project_name: result.project_name,
           version: result.version,
           build_no: result.build_no,
+          pipe_line: result.pipe_line,
+          git_link: result.git_link,
           release_note: result.release_note,
         });
         setOriginalData({
@@ -153,6 +167,8 @@ const EditEmployee = () => {
           project_name: result.project_name,
           version: result.version,
           build_no: result.build_no,
+          pipe_line: result.pipe_line,
+          git_link: result.git_link,
           release_note: result.release_note,
         });
       })
@@ -165,6 +181,8 @@ const EditEmployee = () => {
       originalData.project_name === project_name &&
       originalData.version === version &&
       originalData.build_no === build_no &&
+      originalData.pipe_line === pipe_line &&
+      originalData.git_link === git_link &&
       originalData.release_note === release_note
     ) {
       return true;
@@ -181,7 +199,7 @@ const EditEmployee = () => {
         <label className="py-2">
           <h4>Project Name</h4>
         </label>
-        <input
+        <select
           className="form-control"
           type="text"
           placeholder="Project Name"
@@ -189,10 +207,14 @@ const EditEmployee = () => {
           value={project_name}
           onChange={handleChange}
           id="my_input"
-        />
-        {errors.project_name && (
-          <div className="alert alert-danger">{errors.project_name}</div>
-        )}
+        >
+          <option value={"Location Tracker"}>Location Tracker</option>
+          <option value={"Attendance Monitor"}>Attendance Monitoring</option>
+          <option value={"Check In/Check Out"}>Check In/Check Out</option>
+          <option value={"Waiting Timer"}>Waiting Timer</option>
+          <option value={"Meeting Notes"}>Meeting Notes</option>
+          <option value={"Analytics"}>Analytics</option>
+        </select>
 
         {/* Render the warning message if it exists */}
         {warning && <div className="alert alert-danger">{warning}</div>}
@@ -231,6 +253,42 @@ const EditEmployee = () => {
         />
         {errors.build_no && (
           <div className="alert alert-danger">{errors.build_no}</div>
+        )}
+      </div>
+
+      <div className="mb-3 mt-3">
+        <label className="py-2">
+          <h4>Pipe Line</h4>
+        </label>
+        <input
+          className="form-control"
+          type="text"
+          placeholder="Project Name"
+          name="pipe_line"
+          value={pipe_line}
+          onChange={handleChange}
+          id="my_input"
+        />
+        {errors.pipe_line && (
+          <div className="alert alert-danger">{errors.pipe_line}</div>
+        )}
+      </div>
+
+      <div className="mb-3 mt-3">
+        <label className="py-2">
+          <h4>GitHub Link</h4>
+        </label>
+        <input
+          className="form-control"
+          type="text"
+          placeholder="Project Name"
+          name="git_link"
+          value={git_link}
+          onChange={handleChange}
+          id="my_input"
+        />
+        {errors.git_link && (
+          <div className="alert alert-danger">{errors.git_link}</div>
         )}
       </div>
 

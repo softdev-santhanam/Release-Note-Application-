@@ -37,7 +37,7 @@ function App() {
   // If the total records less then or equal to limits, the pagination should not be display
   const [count, setCount] = useState("");
 
-/*   console.log(`Search: ${searchTerm}`);
+  /*   console.log(`Search: ${searchTerm}`);
   console.log(`Limit: ${limit}`);
   console.log(`Current Page: ${page}`);
   console.log(`Total Page: ${totalPages}`);
@@ -143,6 +143,7 @@ function App() {
       `http://localhost:7000/?page=${page}&limit=${limit}&debouncedSearchTerm=${debouncedSearchTerm}`
     );
     setData(result.data.data);
+    console.log(result.data.data);
     setTotalPages(result.data.totalPages);
     setCount(result.data.count);
   };
@@ -173,7 +174,10 @@ function App() {
             value={searchTerm}
             onChange={handleSearchChange}
           />
-          <button className="rounded-2 p-2 me-5 btn-info border" onClick={handleClear}>
+          <button
+            className="rounded-2 p-2 me-5 btn-info border"
+            onClick={handleClear}
+          >
             <FaRegTimesCircle />
           </button>
         </div>
@@ -214,7 +218,9 @@ function App() {
                   <th className="py-4 text-left align-middle">Project Name</th>
                   <th className="py-4 text-left align-middle">Version</th>
                   <th className="py-4 text-left align-middle">Build Number</th>
-                  <th className="py-4 text-left align-middle col-md-4">
+                  <th className="py-4 text-left align-middle">Pipe Line</th>
+                  <th className="py-4 text-left align-middle">Git Link</th>
+                  <th className="py-4 text-left align-middle col-md-3">
                     Description
                   </th>
                   <th className="py-4 text-left align-middle">Created Date</th>
@@ -231,10 +237,9 @@ function App() {
                     </td>
                     <td className="text-left align-middle">{item.version}</td>
                     <td className="text-left align-middle">{item.build_no}</td>
-                    <td
-                      className="text-left align-middle"
-                      style={{ maxHeight: "50%", overflow: "hidden" }}
-                    >
+                    <td className="description-cell text-left align-middle">{item.pipe_line}</td>
+                    <td className="description-cell text-left align-middle">{item.git_link}</td>
+                    <td className="text-left align-middle">
                       <div className="description-cell">
                         {item.release_note}
                       </div>

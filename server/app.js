@@ -41,6 +41,8 @@ const release_notes_data = sequelize.define(
       unique: true,
       allowNull: false,
     },
+    pipe_line: Sequelize.STRING,
+    git_link: Sequelize.STRING,
     release_note: Sequelize.TEXT,
     date: Sequelize.STRING,
     isDelete: Sequelize.STRING,
@@ -54,6 +56,8 @@ app.post("/", async (req, res) => {
   const project_name = req.body.project_name;
   const version = req.body.version;
   const build_no = req.body.build_no;
+  const pipe_line = req.body.pipe_line;
+  const git_link = req.body.git_link;
   const release_note = req.body.release_note;
   const date = req.body.date;
   const isDelete = req.body.isDelete;
@@ -87,12 +91,13 @@ app.post("/", async (req, res) => {
         project_name,
         version,
         build_no,
+        pipe_line,
+        git_link,
         release_note,
         date,
         isDelete,
       });
-      f;
-      res.send("Data Updated");
+      res.send("Data Created");
     } catch (err) {
       res.send;
     }
