@@ -19,11 +19,25 @@ const AddData = () => {
   };
 
   // Add Date
+  const months = [
+    "Jan",
+    "Feb",
+    "Mar",
+    "Apr",
+    "May",
+    "Jun",
+    "Jul",
+    "Aug",
+    "Sep",
+    "Oct",
+    "Nov",
+    "Dec",
+  ];
   var currentDate = new Date();
   var date = currentDate.getDate();
-  var month = currentDate.getMonth() + 1;
+  var month = months[currentDate.getMonth()];
   var year = currentDate.getFullYear();
-  var createdDate = date + "/" + month + "/" + year;
+  var createdDate = date + " " + month + " " + year;
   // console.log(createdDate);
 
   const [data, setData] = useState({
@@ -45,6 +59,8 @@ const AddData = () => {
   const handleClose = () => setShow(false);
   const handleShow = () => setShow(true);
 
+  const modalRetrieve = "Data Successfully Retrieved";
+
   const handelNavigate = () => {
     navigate("/", { state: { search: searchTerm, lim: limit } });
   };
@@ -62,7 +78,7 @@ const AddData = () => {
     let isValid = true;
     const projectNameRegex = /^[a-zA-Z0-9\s]+$/;
     const versionRegex = /^[0-9]+(\.[0-9]+)*$/;
-    const buildNumberRegex = /^[0-9]+(\.[0-9]+)*$/;
+    const buildNumberRegex = /^[0-9]*$/;
     const releaseNoteRegex = /[^\r\n]+((\r|\n|\r\n)[^\r\n]+)*/;
 
     if (!projectNameRegex.test(project_name)) {
@@ -87,7 +103,7 @@ const AddData = () => {
       setErrors((prev) => ({
         ...prev,
         build_no:
-          "Build number not valid Please enter only decimal and digit numbers.",
+        "Build number not valid Please enter only Numbers.",
       }));
       isValid = false;
     }
@@ -110,12 +126,15 @@ const AddData = () => {
       console.log("try");
       try {
         await axios.post("http://localhost:7000/", data);
-        console.log(`handleShow`);
         handleShow();
+        // console.log(`handleShow`);
       } catch (error) {
         if (error.response.status === 400) {
           console.log("Duplication");
           setWarning(error.response.data.error);
+          if (modalRetrieve === error.response.data.error) {
+            handleShow();
+          }
         } else {
           console.error(error);
         }

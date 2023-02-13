@@ -1,7 +1,8 @@
-.description-table {
-  max-height: 200px;
-  max-width: 100%;
-  overflow-y: scroll;
+.description-cell {
+  white-space: nowrap;
+  width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .thead-tr {

@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import "../App.css";
 import axios from "axios";
 import { useNavigate, useLocation } from "react-router-dom";
@@ -32,15 +32,16 @@ function App() {
   // Add a state to keep track of the search term and limit
   const [searchTerm, setSearchTerm] = useState("");
   const [limit, setLimit] = useState(10);
+  const [debouncedSearchTerm, setDebouncedSearchTerm] = useState("");
 
   // If the total records less then or equal to limits, the pagination should not be display
   const [count, setCount] = useState("");
 
-  console.log(`Search: ${searchTerm}`);
+/*   console.log(`Search: ${searchTerm}`);
   console.log(`Limit: ${limit}`);
   console.log(`Current Page: ${page}`);
   console.log(`Total Page: ${totalPages}`);
-  console.log(`Count: ${count}`);
+  console.log(`Count: ${count}`); */
 
   // State Management for ID
   const [id, setId] = useState(null);
@@ -86,6 +87,20 @@ function App() {
     setLimit(convertLimit);
   };
 
+  // Debounce the searchTerm to prevent rapid fire search requests
+  useEffect(() => {
+    const debouncedFunction = debounce(() => {
+      setDebouncedSearchTerm(searchTerm);
+    }, 500);
+
+    debouncedFunction();
+
+    return () => {
+      debouncedFunction.cancel();
+    };
+  }, [searchTerm]);
+
+  // Handle the search input change
   const handleSearchChange = (e) => {
     setSearchTerm(e.target.value.trim());
   };
@@ -96,48 +111,36 @@ function App() {
     fetchData(page, limit, "");
   };
 
-  // Debounce to limit the rate of execution of search input action
-  const debouncedResults = useMemo(() => {
-    return debounce(handleSearchChange, 300);
-  }, []);
-
-  useEffect(() => {
-    return () => {
-      debouncedResults.cancel();
-    };
-  });
-
   // useEffect hook to fetch the data from database and set it to states
   useEffect(() => {
-    fetchData(page, limit, searchTerm);
+    fetchData(page, limit, debouncedSearchTerm);
     // eslint-disable-next-line
   }, [page, limit]);
 
   useEffect(() => {
-    fetchData(initialValue, limit, searchTerm);
+    fetchData(initialValue, limit, debouncedSearchTerm);
     // eslint-disable-next-line
   }, [limit]);
 
   useEffect(() => {
-    debouncedResults();
-    fetchData(initialValue, limit, searchTerm);
+    fetchData(initialValue, limit, debouncedSearchTerm);
     // eslint-disable-next-line
-  }, [searchTerm]);
+  }, [debouncedSearchTerm]);
 
   useEffect(() => {
-    fetchData(initialValue, limit, searchTerm);
+    fetchData(initialValue, limit, debouncedSearchTerm);
     // eslint-disable-next-line
-  }, [searchTerm, limit]);
+  }, [debouncedSearchTerm, limit]);
 
   useEffect(() => {
-    fetchData(page, limit, searchTerm);
+    fetchData(page, limit, debouncedSearchTerm);
     setIdToDelete(null);
     // eslint-disable-next-line
   }, [idToDelete]);
 
-  const fetchData = async (page, limit, searchTerm) => {
+  const fetchData = async (page, limit, debouncedSearchTerm) => {
     const result = await axios.get(
-      `http://localhost:7000/?page=${page}&limit=${limit}&searchTerm=${searchTerm}`
+      `http://localhost:7000/?page=${page}&limit=${limit}&debouncedSearchTerm=${debouncedSearchTerm}`
     );
     setData(result.data.data);
     setTotalPages(result.data.totalPages);
@@ -168,11 +171,9 @@ function App() {
             type="text"
             placeholder="Search..."
             value={searchTerm}
-            onChange={(e) => {
-              setSearchTerm(e.target.value.trim());
-            }}
+            onChange={handleSearchChange}
           />
-          <button className="rounded-2 p-2 me-5 border" onClick={handleClear}>
+          <button className="rounded-2 p-2 me-5 btn-info border" onClick={handleClear}>
             <FaRegTimesCircle />
           </button>
         </div>
@@ -202,7 +203,7 @@ function App() {
         {count === 0 ? (
           <h1 className="text-center p-5">No Result Found!</h1>
         ) : (
-          <div className="border" style={{ height: "500px", overflow: "auto" }}>
+          <div className="border" style={{ height: "auto", overflow: "auto" }}>
             <table
               className="table table-hover table-fixed"
               style={{ width: "100%", tableLayout: "fixed" }}
@@ -213,7 +214,9 @@ function App() {
                   <th className="py-4 text-left align-middle">Project Name</th>
                   <th className="py-4 text-left align-middle">Version</th>
                   <th className="py-4 text-left align-middle">Build Number</th>
-                  <th className="py-4 text-left align-middle col-md-4">Description</th>
+                  <th className="py-4 text-left align-middle col-md-4">
+                    Description
+                  </th>
                   <th className="py-4 text-left align-middle">Created Date</th>
                   <th className="py-4 px-5 text-left align-middle">Edit</th>
                   <th className="py-4 text-left align-middle">Delete</th>
@@ -232,7 +235,7 @@ function App() {
                       className="text-left align-middle"
                       style={{ maxHeight: "50%", overflow: "hidden" }}
                     >
-                      <div className="description-table">
+                      <div className="description-cell">
                         {item.release_note}
                       </div>
                     </td>

@@ -105,14 +105,14 @@ app.get("/", async (req, res) => {
   const limit = parseInt(req.query.limit) || 10;
   const currentPage = parseInt(req.query.page) || 1;
   const offset = Number((currentPage - 1) * limit);
-  const { project_name, id, build_no, searchTerm } = req.query;
+  const { project_name, id, build_no, debouncedSearchTerm } = req.query;
 
   let where = { isDelete: "0" }; // exclude the data with isDelete set to 1
-  if (searchTerm) {
+  if (debouncedSearchTerm) {
     where[Sequelize.Op.or] = [
-      { project_name: { [Sequelize.Op.like]: `%${searchTerm}%` } },
-      { id: { [Sequelize.Op.like]: `%${searchTerm}%` } },
-      { build_no: { [Sequelize.Op.like]: `%${searchTerm}%` } },
+      { project_name: { [Sequelize.Op.like]: `%${debouncedSearchTerm}%` } },
+      { id: { [Sequelize.Op.like]: `%${debouncedSearchTerm}%` } },
+      { build_no: { [Sequelize.Op.like]: `%${debouncedSearchTerm}%` } },
     ];
   }
   if (project_name) {

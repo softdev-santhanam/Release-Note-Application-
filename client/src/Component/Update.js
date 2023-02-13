@@ -6,6 +6,7 @@ import Modal from "react-bootstrap/Modal";
 
 const EditEmployee = () => {
   const [warning, setWarning] = useState("");
+  // console.log(warning);
 
   // Handle Search Limit in Update Page
   const navigate = useNavigate();
@@ -44,6 +45,8 @@ const EditEmployee = () => {
   const handleShow = () => setShow(true);
   const handleClose = () => setShow(false);
 
+  const modalRetrieve = "Data Successfully Retrieved";
+
   const handelNavigate = () => {
     navigate("/", { state: { search: searchTerm, lim: limit, pg: page } });
   };
@@ -61,7 +64,7 @@ const EditEmployee = () => {
     let isValid = true;
     const projectNameRegex = /^[a-zA-Z0-9\s]+$/;
     const versionRegex = /^[0-9]+(\.[0-9]+)*$/;
-    const buildNumberRegex = /^[0-9]+(\.[0-9]+)*$/;
+    const buildNumberRegex = /^[0-9]*$/;
     const releaseNoteRegex = /[^\r\n]+((\r|\n|\r\n)[^\r\n]+)*/;
 
     if (!projectNameRegex.test(project_name)) {
@@ -86,7 +89,7 @@ const EditEmployee = () => {
       setErrors((prev) => ({
         ...prev,
         build_no:
-          "Build number not valid Please enter only decimal and digit numbers.",
+          "Build number not valid Please enter only Numbers.",
       }));
       isValid = false;
     }
@@ -109,12 +112,15 @@ const EditEmployee = () => {
       console.log("try");
       try {
         await axios.put(`http://localhost:7000/${id}`, data);
-        console.log(`handleShow`);
         handleShow();
+        console.log(`handleShow`);
       } catch (error) {
         if (error.response.status === 400) {
           console.log("Duplication");
           setWarning(error.response.data.error);
+          if (modalRetrieve === error.response.data.error) {
+            handleShow();
+          }
         } else {
           console.error(error);
         }
